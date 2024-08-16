@@ -83,13 +83,27 @@ class Assistant:
         if response:
             self._tts(response)
 
+    '''
+        Supported output formats
+        The default response format is "mp3", but other formats like "opus", "aac", "flac", and "pcm" are available.
+
+        Opus: For internet streaming and communication, low latency.
+        AAC: For digital audio compression, preferred by YouTube, Android, iOS.
+        FLAC: For lossless audio compression, favored by audio enthusiasts for archiving.
+        WAV: Uncompressed WAV audio, suitable for low-latency applications to avoid decoding overhead.
+        PCM: Similar to WAV but containing the raw samples in 24kHz (16-bit signed, low-endian), without the header.
+
+    '''
+
     def _tts(self, response):
         player = PyAudio().open(format=paInt16, channels=1, rate=24000, output=True)
 
         with openai.audio.speech.with_streaming_response.create(
             model="tts-1",
-            voice="alloy",
+            #voice="alloy",
+            voice="echo",
             response_format="pcm",
+            #response_format="opus",
             input=response,
         ) as stream:
             for chunk in stream.iter_bytes(chunk_size=1024):
@@ -136,11 +150,11 @@ class Assistant:
 
 webcam_stream = WebcamStream().start()
 
-model = ChatGoogleGenerativeAI(model="gemini-1.5-flash-latest")
+#model = ChatGoogleGenerativeAI(model="gemini-1.5-flash-latest")
 
 # You can use OpenAI's GPT-4o model instead of Gemini Flash
 # by uncommenting the following line:
-# model = ChatOpenAI(model="gpt-4o")
+model = ChatOpenAI(model="gpt-4o-mini")
 
 assistant = Assistant(model)
 
@@ -163,7 +177,8 @@ stop_listening = recognizer.listen_in_background(microphone, audio_callback)
 
 while True:
     cv2.imshow("webcam", webcam_stream.read())
-    if cv2.waitKey(1) in [27, ord("q")]:
+    # 檢查是否按下 'ESC' 或 'q' 鍵以退出
+    if cv2.waitKey(1) & 0xFF in [27, ord("q")]:
         break
 
 webcam_stream.stop()
